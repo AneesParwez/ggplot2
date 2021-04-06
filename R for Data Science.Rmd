@@ -1,0 +1,245 @@
+---
+title: "Summary: R for Data Science"
+author: "Anees Parwez"
+date: "4/2/2021"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+This document is made with aim to summarize my reading from the book, ' R for Data Science', by Wickham. This is the guy who developed tidyverse package. 
+The tidyverse is a collection of open source R packages introduced by Hadley Wickham and his team that "share an underlying design philosophy, grammar, and data structures" of tidy data. See these attached packages. 
+```{r}
+library(tidyverse)
+```
+Of these I have heard on only ggplot2 :( 
+
+An interesting statement " It’s possible to divide data analysis into two camps: hypothesis generation and hypothesis confirmation". Another phrase to add in my repository "This resource is not an Island", in sense that there are other resources available.  
+
+Some command I need to learn for getting help:
+```{r}
+dput(mtcars)
+```
+\section{Explore}
+\subsection{ggplot2}
+A more literary article "\href{A Layered Grammar of Graphic}{http://vita.had.co.nz/papers/layered-grammar.pdf}"
+
+Consider the notation package::function(). This ensures we are using the function from desired package. The below chunk loads the dataset mpg from ggplot2, thus ensuring any other variable with same name (mpg) is not used instead. 
+```{r}
+ggplot2::mpg
+```
+
+
+
+We are creating maps. if the variables are A,B, D, we create maps; $x-position \to A$, $y-position\to B$, $shape\to D$. x-position, y-position, and shape are
+examples of aesthetics, things that we can perceive on the graphic. Whereas, bars, lines, and points are all examples of geometric objects.  
+
+```{r}
+ggplot(mpg) + geom_point(mapping=aes(x=displ, y =hwy, col=class))
+ggplot(mpg) + geom_point(mapping=aes(x=displ, y =hwy, col="blue"))
+ggplot(mpg) + geom_point(mapping=aes(x=displ, y =hwy), col="blue")
+```
+In first, I am defining a mapping , called "aes", from x to displ variable. Similarly, other mappings are drawn. In second, the $aes: col\to "blue"$ defines a mapping to a constant variable "blue", so a legend is created. Third line is actually what we have wanted. We do not want a map as assumed in second command. Hence, we mentioned it outside the 'mapping' in third. 
+
+
+$ \textbf{aes: size \to class as size is continuous and ordered while class is unordered. But alpha, col can be mapped to continous varaible}$
+$\textbf{Can use alph, as transparency parameter. Varying alpha is useful for large datasets. Also, only 6 shapes by default in shape aestheic  map}$
+
+We should not map aes: size $\to$ class, as size is continuous and ordered while class is unordered. But alpha, col can be mapped to continous varaible
+Can use alph, as transparency parameter. Varying alpha is useful for large datasets. Also, only 6 shapes by default in shape aestheic  map
+
+
+
+
+
+
+
+Check this out:
+```{r}
+ggplot(mpg) + geom_point(mapping=aes(x=displ, y =hwy, stroke=cty))
+```
+For shapes that have a border (like 21), you can colour the inside and outside separately. Use the stroke aesthetic to modify the width of the border. Intersting plots found in $\href{https://ggplot2.tidyverse.org/reference/geom_point.html}{link}$
+
+We had seen earlier what aes(col) achieves. A similar task can be done by `Faceting'. Divides the larger data in small subsets and plots. 
+```{r}
+mpg%>% ggplot() + geom_point(mapping=aes(x=displ, y = hwy)) + facet_wrap(~cyl,ncol=1,nrow=4)
+```
+If we are to divide the dataset based on two varaibles, instead of one, we can use facet_grid command. 
+```{r}
+mpg%>% ggplot() + geom_point(mapping=aes(x=displ, y = hwy)) + facet_grid(drv~cyl)
+#We can achive what facet_wrap does using facet_grid
+mpg%>% ggplot() + geom_point(mapping=aes(x=displ, y = hwy)) + facet_grid(.~cyl)
+mpg%>% ggplot() + geom_point(mapping=aes(x=displ, y = hwy)) + facet_grid(cyl~.)
+```
+The $\textbf{.}$ controls the axes along which plots are made. 
+$\textbf{ \textbf{For large datasets, faceting is more useful than assiginig colours, for small datasets, assigning colours might be preferred}}$
+
+\subsubsection{geometrical objects}
+lines, boxplots, points are geometrical objects. For each 
+```{r}
+ggplot(mpg) + geom_smooth(mapping=aes(x=displ, y=hwy,linetype=drv))
+```
+Here geom_smooth() separates the cars into three lines based on their drv value, which describes a car’s drivetrain. 
+
+We can overlay one geom object on top of another. There are 30 geom objects and many more in extension package, see cheatsheet. 
+
+We can use 'group' aesthetic for different geom objects. But it is better to use other aes maps (like, colour, size for geom_point; linetype for geom_smooth ). 
+```{r}
+ggplot(data = mpg) + geom_smooth(mapping = aes(x = displ, y = hwy, group = drv))
+ggplot(data = mpg) + geom_smooth(mapping = aes(x = displ, y = hwy, color = drv),
+                                  show.legend =FALSE)
+```
+
+Both achieve the same task, but colour additionally would have shown legend
+
+To display multiple geoms in the same plot, add multiple geom functions to ggplot():
+```{r}
+ggplot(data = mpg) +
+geom_point(mapping = aes(x = displ, y = hwy)) +
+geom_smooth(mapping = aes(x = displ, y = hwy))
+```
+
+We can further present a part of data by certain geom and other part by other geom. Note that the local parameter in geom_smooth overrides to global variables in ggplot()
+```{r}
+ggplot(mpg,mapping=aes(x=displ,y=hwy))+ geom_point(aes(col=drv)) +
+  geom_smooth(data=filter(mpg, class=="subcompact"),se=FALSE)
+```
+
+
+\subsubsection{Boxplot}
+```{r}
+ggplot(diamonds) + geom_bar(aes(x=cut))
+```
+Though the y value is not mentioned, the geom_box assumes what that we want to count and does so by itself. Some other geom objects which calculate things by itself is geom_smooth. Smoothers fit a model to your data and then plot predictions from the model. 
+
+These are statistical transformation or "stats". This works because every geom has a default stat, and every stat has a default geom. Example geom_box uses the 'count' stat. 
+```{r}
+ggplot(data = diamonds) +geom_bar(mapping = aes(x = cut, y = ..prop..,group=1))
+```
+
+ggplot2 provides over 20 stats for you to use. Each stat is a function, so you can get help in the usual way, e.g., ?stat_bin. To see a complete list of stats, try the ggplot2 cheatsheet
+
+For boxplot, fill is more useful than color. Note that we have used another variable in 'fill'
+```{r}
+ggplot(data = diamonds) + geom_bar(mapping = aes(x = cut, colour = clarity))
+```
+To better make use of this feature, we need to use the postion argument. By default the position os "stack". This just adds up all the values in a bar, see the total count. 
+
+position = "identity" will place each object exactly where it falls in the context of the graph. This is not very useful for bars, because it overlaps them. To see the overlaps, 
+```{r}
+ggplot(data = diamonds,
+mapping = aes(x = cut, color = clarity)) + geom_bar(fill = NA, position = "identity")
+```
+
+But this is not very useful for comparing heights across. For that use  position = "fill. 
+```{r}
+ggplot(data = diamonds) +geom_bar(mapping = aes(x = cut, fill = clarity),position = "fill")
+```
+
+position = "dodge" places overlapping objects directly beside one another.
+```{r}
+ggplot(data = diamonds) + geom_bar(mapping = aes(x = cut, fill = clarity),position = "dodge")
+```
+
+
+In case of scatter plots, if there is a problem of overlapping make use of 'jitter'
+```{r}
+ggplot(data = mpg) +geom_point(mapping = aes(x = displ, y = hwy),position = "jitter")
+ggplot(data = mpg,mapping = aes(x = displ, y = hwy)) +geom_jitter()
+
+```
+
+
+Overlapping can also be taken care by geom_count. It represents the number of points overlapping. The size of points are in accordance with the number of overlapping points. 
+```{r}
+ggplot(data = mpg,mapping = aes(x = displ, y = hwy)) +geom_count()
+```
+
+
+\subsubsection{Coordinate system}
+
+coord_flip() switches the x- and y-axes. This is useful (for example) if you want horizontal boxplots. It’s also useful for long labels—
+```{r}
+ggplot(data = mpg, mapping = aes(x = class, y = hwy)) + geom_boxplot() + coord_flip()
+```
+
+
+
+\section{dpylr}
+
+$\textbf{Tibble}$ is a data type like data frame for working in tidyverse. 
+
+The key words in dplyr are the verbs of data manipulation. These are:
+$\begin{itemize}
+ \item filter
+  \item arrange
+  \item select
+  \item mutate 
+  \item resize
+ \end{itemize}$
+
+These can all be used in conjunction with group_by(), which changes the scope of each function from operating on the entire dataset to operating on it group-by-group. 
+
+filter() woks by taking the first argument as dataset and follwed by them are the column names.
+```{r}
+library(nycflights13)
+library(dplyr)
+filter(flights, month == 1, day == 1)
+```
+
+Since R uses approaximation, we might make use of near() instead of ==
+```{r}
+
+sqrt(2) ^ 2 == 2
+#> [1] FALSE
+near(sqrt(2) ^ 2, 2)
+#> [1] TRUE
+```
+We can use logical operators too
+```{r}
+filter(flights, month == 11 | month == 12)
+#And not this 11|12 = TRUE (=1)
+filter(flights, month == 11 | 12)
+filter(flights,month %in% c(11,12))
+```
+A useful shorthand for this problem is x %in% y. This will select every row where x is one of the values in y. 
+```{r}
+NA == NA
+#> [1] NA
+# Hence, use is.na(x)
+```
+filter() only includes rows where the condition is TRUE; it excludes both FALSE and NA values. If you want to preserve missing values, ask for them explicitly:
+```{r}
+df <- tibble(x = c(1, NA, 3))
+filter(df, x > 1)
+filter(df, is.na(x) | x > 1)
+```
+
+
+arrange() works similarly to filter() except that instead of selecting rows, it changes their order. If you provide more than one column name, each additional column will be used to break ties in the values of preceding columns:
+```{r}
+arrange(flights, year, month, day)
+#MISSING VALUES AT END
+f <- tibble(x = c(5, 2, NA))
+arrange(df, x)
+arrange(df, desc(x))
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
